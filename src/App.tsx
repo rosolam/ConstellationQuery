@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { type CatalogJson, parseCatalog, StarField } from './engine/catalog';
 import { project } from './engine/fit';
 import { validatePattern } from './engine/matcher';
-import { normalizePoints } from './engine/points';
+import { normalizePoints, sanitizeOptions } from './engine/points';
 import { DEFAULT_OPTIONS, type FitResult, type Point, type SearchOptions } from './engine/types';
 import { normalize, type Vec3 } from './engine/vec';
 import { chartBasis } from './engine/visibility';
@@ -11,6 +11,7 @@ import { PatternInput } from './ui/PatternInput';
 import { ResultDetail } from './ui/ResultDetail';
 import { ResultsTable } from './ui/ResultsTable';
 import { formatYear } from './ui/format';
+import { checkSettings, type SettingWarning } from './ui/searchChecks';
 import { runSearch, type SearchProgress, type SearchResults } from './ui/searchClient';
 
 const EXAMPLE = ['Dubhe', 'Merak', 'Phecda', 'Megrez', 'Alioth', 'Mizar', 'Alkaid'];
@@ -67,6 +68,9 @@ export function App() {
     if (list && !list.some((r) => r.key === selectedKey)) setSelectedKey(list[0]?.key ?? null);
   };
 
+  const starsAt = (mag: number) => catalog?.field.stars.filter((s) => s.mag <= mag).length ?? 0;
+  const [warnings, setWarnings] = useState<SettingWarning[] | null>(null);
+
   const start = () => {
     if (!catalog) return;
     const invalid = validatePattern(points, options);
@@ -75,6 +79,23 @@ export function App() {
       return;
     }
     setError('');
+    const found = checkSettings(options, starsAt);
+    if (found.length > 0) {
+      setWarnings(found);
+      return;
+    }
+    run();
+  };
+
+  const applyFix = (patch: Partial<SearchOptions>) => {
+    const next = sanitizeOptions({ ...options, ...patch });
+    setOptions(next);
+    setWarnings(checkSettings(next, starsAt));
+  };
+
+  const run = () => {
+    if (!catalog) return;
+    setWarnings(null);
     setSearchResults(null);
     setView('all');
     setSelectedKey(null);
@@ -212,6 +233,38 @@ export function App() {
           </div>
         </div>
         </>
+      )}
+
+      {warnings && (
+        <div className="modal-backdrop">
+          <div className="modal modal-wide" role="alertdialog" aria-modal="true" aria-labelledby="warn-title">
+            <h2 id="warn-title">{warnings.length ? 'Check these settings before searching' : 'Settings look good'}</h2>
+            <p>
+              {warnings.length
+                ? 'The defaults finish in a few seconds. These settings could make the search take much longer or fill the results with chance matches.'
+                : 'All suggested changes are applied.'}
+            </p>
+            <ul className="warning-list">
+              {warnings.map((w) => (
+                <li key={w.id}>
+                  <strong>{w.title}</strong>
+                  <span>{w.detail}</span>
+                  {w.fix && (
+                    <button className="small" onClick={() => applyFix(w.fix!.patch)}>
+                      {w.fix.label}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <div className="row-buttons modal-actions">
+              <button onClick={() => setWarnings(null)}>Back to settings</button>
+              <button className="primary" onClick={run} autoFocus>
+                {warnings.length ? 'Search anyway' : 'Search the sky'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {progress && (

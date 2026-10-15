@@ -1,4 +1,5 @@
 import type { BodyId } from './bodies';
+import type { Clutter } from './clutter';
 import type { LatitudeBand } from './visibility';
 import type { Vec3 } from './vec';
 
@@ -102,4 +103,6 @@ export interface FitResult {
   meanMag: number;
   faintestMag: number;
   uncertain: boolean;
+  /** How much the member stars dominate their patch of sky at the best epoch. */
+  clutter: Clutter;
 }

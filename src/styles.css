@@ -561,6 +561,31 @@ table.results tbody.selected td.members {
   color: #fff;
 }
 
+.standout-high {
+  color: #7fe0a0;
+  font-weight: 600;
+}
+
+.standout-mid {
+  color: var(--text);
+}
+
+.standout-low {
+  color: var(--muted);
+}
+
+.figure-outline {
+  fill: rgba(255, 230, 128, 0.04);
+  stroke: rgba(255, 230, 128, 0.35);
+  stroke-dasharray: 2 4;
+}
+
+.intruder {
+  fill: none;
+  stroke: #ff9f40;
+  stroke-width: 1.5;
+}
+
 .member-moving {
   color: var(--gold);
 }
@@ -701,6 +726,49 @@ button.nav-button {
   padding: 20px 24px;
   width: min(420px, calc(100vw - 32px));
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal.modal-wide {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+
+.warning-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.warning-list li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid #6b5a22;
+  background: #2a2412;
+  border-radius: 6px;
+}
+
+.warning-list strong {
+  color: #f0dd9c;
+}
+
+.warning-list span {
+  color: var(--text);
+  font-size: 12.5px;
+}
+
+.warning-list button {
+  margin-top: 4px;
+}
+
+.modal-actions {
+  justify-content: flex-end;
 }
 
 .modal h2 {

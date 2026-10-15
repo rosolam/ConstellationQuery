@@ -38,7 +38,14 @@ const HELP: Record<string, ReactNode> = {
     <p>For a latitude to count as "visible from", every member must be at least this many degrees above the horizon at the same moment. Haze dims stars near the horizon; 10° is a common practical limit.</p>
   ),
   maxResults: (
-    <p>How many fits to list, best first, after removing duplicates. The search keeps a limited pool of candidates internally, so values above about 150 may not return more fits.</p>
+    <>
+      <p>How many fits to list in each result set, best first, after removing duplicates. Up to 1,000.</p>
+      <p>
+        The search keeps a pool of candidates that grows with this number, so larger lists take somewhat longer: with
+        the default options, 1,000 results take about 2–3 times as long as 30. Fewer fits come back when fewer exist
+        within the error limit.
+      </p>
+    </>
   ),
   years: (
     <>
@@ -114,7 +121,7 @@ export function OptionsPanel({ options, setOptions, disabled }: Props) {
         {num('maxSpanDeg', 'Max span (°)', 1, 1, MAX_SPAN_CEILING_DEG)}
         {num('minSpanDeg', 'Min span (°)', 0.5, 0.1, MAX_SPAN_CEILING_DEG)}
         {num('minAltitudeDeg', 'Min altitude (°)', 1, 0, 60)}
-        {num('maxResults', 'Results to show', 1, 1, 200)}
+        {num('maxResults', 'Results to show', 10, 1, 1000)}
         {num('startYear', 'From year', 500, -198000, 198000, formatYear(options.startYear), HELP.years)}
         {num('endYear', 'To year', 500, -198000, 198000, formatYear(options.endYear), HELP.years)}
         {num('discoveryStepYears', 'Search step (years)', 500, 50, 50000)}

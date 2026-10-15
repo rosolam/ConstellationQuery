@@ -2,7 +2,12 @@ import { useMemo, useState } from 'react';
 import type { FitResult } from '../engine/types';
 import { formatAngle, formatLat, formatYear } from './format';
 
-type SortKey = 'error' | 'brightness' | 'span' | 'epoch';
+type SortKey = 'error' | 'brightness' | 'span' | 'epoch' | 'standout';
+
+/** Standard constellation figures all stand out at 62% or more; most chance matches stay below 30%. */
+export function standoutClass(standout: number): string {
+  return standout >= 0.6 ? 'standout-high' : standout >= 0.3 ? 'standout-mid' : 'standout-low';
+}
 
 function brightCounts(r: FitResult, brightMag: number): { bright: number; stars: number } {
   const stars = r.members.filter((m) => m.kind === 'star');
@@ -30,6 +35,7 @@ export function ResultsTable({ results, selectedKey, onSelect, brightMag }: Prop
       brightness: (a, b) => brightShare(b, brightMag) - brightShare(a, brightMag) || a.faintestMag - b.faintestMag,
       span: (a, b) => b.spanDeg - a.spanDeg,
       epoch: (a, b) => b.bestYear - a.bestYear,
+      standout: (a, b) => b.clutter.standout - a.clutter.standout || a.clutter.intruders - b.clutter.intruders,
     };
     return rows.sort((a, b) => by[sort](a.r, b.r));
   }, [results, sort, brightMag]);
@@ -54,6 +60,9 @@ export function ResultsTable({ results, selectedKey, onSelect, brightMag }: Prop
             <th>Visible from</th>
             <th title={`Stars of magnitude ${brightMag.toFixed(1)} or brighter, out of all stars in the fit`}>
               {header('brightness', 'Bright')}
+            </th>
+            <th title="Share of the light in the figure's area that comes from its own stars. Standard constellations score 62% or more.">
+              {header('standout', 'Stand-out')}
             </th>
           </tr>
         </thead>
@@ -91,9 +100,16 @@ export function ResultsTable({ results, selectedKey, onSelect, brightMag }: Prop
                   );
                 })()}
               </td>
+              <td
+                title={`${r.clutter.intruders} competing star${r.clutter.intruders === 1 ? '' : 's'} inside the figure's area`}
+                className={standoutClass(r.clutter.standout)}
+              >
+                {Math.round(r.clutter.standout * 100)}%
+                {r.clutter.intruders > 0 && <span className="sub"> ·{r.clutter.intruders}</span>}
+              </td>
             </tr>
             <tr>
-              <td className="members" colSpan={6}>
+              <td className="members" colSpan={7}>
                 {r.members.map((m, i) => (
                   <span key={m.pointIndex}>
                     {i > 0 && ', '}

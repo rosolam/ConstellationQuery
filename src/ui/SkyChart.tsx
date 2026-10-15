@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { BODY_BY_ID } from '../engine/bodies';
+import { convexHull } from '../engine/clutter';
 import type { StarField } from '../engine/catalog';
 import { precessionFrame } from '../engine/precession';
 import type { FitResult } from '../engine/types';
@@ -66,9 +67,21 @@ export function SkyChart({ result, field, magLimit }: Props) {
       .map((b) => BODY_BY_ID[b])
       .filter((b) => b.maxLatitudeDeg > 0)
       .map((b) => ({ name: b.name, up: circle(frame.eclipticPole, b.maxLatitudeDeg), down: circle(frame.eclipticPole, -b.maxLatitudeDeg) }));
+    const hull = convexHull(
+      result.members.filter((m) => m.kind === 'star').flatMap((m) => {
+        const p = toSvg(m.actual);
+        return p ? [p] : [];
+      }),
+    );
+    const intruders = result.clutter.intruderIdx.flatMap((i) => {
+      const p = toSvg(field.position(i, year));
+      return p ? [{ i, x: p[0], y: p[1] }] : [];
+    });
     return {
       toSvg,
       stars,
+      outline: hull.length >= 3 ? `M${hull.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join('L')}Z` : '',
+      intruders,
       ecliptic: movingBodies.length ? circle(frame.eclipticPole, 0) : '',
       equator: circle(frame.equatorPole, 0),
       corridors,
@@ -92,6 +105,10 @@ export function SkyChart({ result, field, magLimit }: Props) {
           </g>
         ))}
         {chart.ecliptic && <path d={chart.ecliptic} className="ecliptic" />}
+        {chart.outline && <path d={chart.outline} className="figure-outline" />}
+        {chart.intruders.map((s) => (
+          <rect key={s.i} x={s.x - 7} y={s.y - 7} width={14} height={14} className="intruder" transform={`rotate(45 ${s.x} ${s.y})`} />
+        ))}
         {chart.stars.map((s) => (
           <circle key={s.i} cx={s.x} cy={s.y} r={s.r} className={s.member ? 'star member' : 'star'} />
         ))}
@@ -122,7 +139,7 @@ export function SkyChart({ result, field, magLimit }: Props) {
         North of date up, east left (as seen from the ground). Blue line: celestial equator.
       </text>
       <text x={12} y={SIZE - 12} className="legend">
-        Red: your points. Ring: matched star.
+        Red: your points. Ring: matched star.{chart.intruders.length ? ' Orange diamond: competing star.' : ''}
         {chart.ecliptic ? ' Gold: ecliptic. Dashed: moving-body corridors.' : ''}
       </text>
     </svg>

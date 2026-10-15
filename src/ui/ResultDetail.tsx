@@ -4,6 +4,8 @@ import type { StarField } from '../engine/catalog';
 import type { FitResult } from '../engine/types';
 import { horizonOrientation, raDecOfDate } from '../engine/visibility';
 import { formatAngle, formatDec, formatLat, formatRa, formatRange, formatYear, yearsAgo } from './format';
+import { InfoTip } from './InfoTip';
+import { standoutClass } from './ResultsTable';
 import { SkyChart } from './SkyChart';
 
 interface Props {
@@ -61,6 +63,29 @@ export function ResultDetail({ result, field, magLimit, brightMag }: Props) {
             <dt>Angular span</dt>
             <dd>
               {result.spanDeg.toFixed(1)}° (1.0 pattern unit ≈ {result.unitDeg.toFixed(1)}°)
+            </dd>
+            <dt>
+              Stand-out{' '}
+              <InfoTip label="Stand-out">
+                <p>
+                  How much the figure's own stars dominate their patch of sky: the share of light inside the figure's
+                  outline (grown by 10% of its span, counting stars to magnitude 5) that comes from its members.
+                </p>
+                <p>
+                  Competing stars are non-members inside that area at least as bright as the figure's faintest star; the
+                  eye tends to join them in, which breaks the shape.
+                </p>
+                <p>
+                  Calibrated on 28 standard constellations and asterisms: all score 62% or more and 23 have no competing
+                  stars, while same-shape chance matches score a median of 9% with about 24 competing stars.
+                </p>
+              </InfoTip>
+            </dt>
+            <dd className={standoutClass(result.clutter.standout)}>
+              {Math.round(result.clutter.standout * 100)}% ·{' '}
+              {result.clutter.intruders === 0
+                ? 'no competing stars'
+                : `${result.clutter.intruders} competing star${result.clutter.intruders === 1 ? '' : 's'} (brightest mag ${result.clutter.brightestIntruderMag!.toFixed(2)})`}
             </dd>
             <dt>Rotation</dt>
             <dd>

@@ -1,5 +1,5 @@
 import type { CatalogJson } from '../engine/catalog';
-import { epochGrid, MAX_REFINED_CANDIDATES, mergeCandidates, rankResults } from '../engine/matcher';
+import { epochGrid, mergeCandidates, rankResults, refinedCandidates } from '../engine/matcher';
 import type { Candidate, FitResult, Point, SearchOptions } from '../engine/types';
 import type { WorkerRequest, WorkerResponse } from '../worker/matchWorker';
 
@@ -80,7 +80,7 @@ export function runSearch(
         ),
       ),
     );
-    const candidates = mergeCandidates(lists).slice(0, MAX_REFINED_CANDIDATES);
+    const candidates = mergeCandidates(lists).slice(0, refinedCandidates(opts));
     let refined = 0;
     onProgress({ phase: 'refine', pass: label, done: 0, total: poolSize });
     const parts = await Promise.all(

@@ -1,5 +1,6 @@
 import { BODY_BY_ID, type BodyId, bodiesReaching } from './bodies';
 import { isUncertain, type StarField, starLabel } from './catalog';
+import { measureClutter } from './clutter';
 import { fitSimilarity } from './fit';
 import { precessionFrame } from './precession';
 import {
@@ -20,8 +21,15 @@ const CANDIDATE_TOLERANCE_FACTOR = 2.5;
 const DISCOVERY_SLACK = 1.5;
 /** Prune a partial match once its deviation from the anchor-based prediction exceeds this multiple of the bound. */
 const RMS_PRUNE_FACTOR = 2;
-const MAX_CANDIDATES_PER_EPOCH = 150;
-export const MAX_REFINED_CANDIDATES = 300;
+/** Candidates kept per epoch; the branch-and-bound tightens once this many exist, so larger pools search slower. */
+export function candidatesPerEpoch(options: SearchOptions): number {
+  return Math.max(150, Math.ceil(options.maxResults * 1.5));
+}
+
+/** Candidates refined overall; about half survive de-duplication. */
+export function refinedCandidates(options: SearchOptions): number {
+  return Math.max(300, options.maxResults * 3);
+}
 /** Uncertain catalog motion matters once the epoch is this far from J2000. */
 const UNCERTAIN_AFTER_YEARS = 5000;
 
@@ -257,11 +265,12 @@ export function discoverAtEpoch(
   const assignment = new Int32Array(n);
   // Branch and bound: once enough candidates exist, only better ones are worth finding.
   let bound = threshold * DISCOVERY_SLACK;
+  const perEpoch = candidatesPerEpoch(options);
   const prune = () => {
-    const kept = [...found.entries()].sort((u, v) => u[1].errorRate - v[1].errorRate).slice(0, MAX_CANDIDATES_PER_EPOCH);
+    const kept = [...found.entries()].sort((u, v) => u[1].errorRate - v[1].errorRate).slice(0, perEpoch);
     found.clear();
     for (const [k, c] of kept) found.set(k, c);
-    if (kept.length >= MAX_CANDIDATES_PER_EPOCH) bound = Math.min(bound, kept[kept.length - 1][1].errorRate);
+    if (kept.length >= perEpoch) bound = Math.min(bound, kept[kept.length - 1][1].errorRate);
   };
 
   for (const plan of plans) {
@@ -355,7 +364,7 @@ export function discoverAtEpoch(
         if (fit.errorRate > bound) continue;
         if (fit.spanDeg > options.maxSpanDeg * 1.05 || fit.spanDeg < options.minSpanDeg * 0.95) continue;
         found.set(key, { year, assignment: starAssignment, errorRate: fit.errorRate });
-        if (found.size >= 2 * MAX_CANDIDATES_PER_EPOCH) prune();
+        if (found.size >= 2 * perEpoch) prune();
       }
     }
   }
@@ -400,7 +409,7 @@ export function refineCandidates(
   const years = epochGrid(options.startYear, options.endYear, options.refineStepYears);
   const results: FitResult[] = [];
 
-  for (const cand of candidates.slice(0, MAX_REFINED_CANDIDATES)) {
+  for (const cand of candidates.slice(0, refinedCandidates(options))) {
     const movingIdx = cand.assignment.map((s, k) => (s < 0 ? k : -1)).filter((k) => k >= 0);
     const errors: number[] = [];
     const fitOk: boolean[] = [];
@@ -499,6 +508,7 @@ export function refineCandidates(
       meanMag: mags.reduce((a, b) => a + b, 0) / Math.max(1, mags.length),
       faintestMag: Math.max(...mags),
       uncertain: farFromJ2000 && starMembers.some((mm) => mm.uncertain),
+      clutter: measureClutter(field, starMembers.map((mm) => mm.starIndex), bestYear),
     });
   }
 

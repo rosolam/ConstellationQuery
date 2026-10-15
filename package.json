@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "calibrate:clutter": "vitest run src/engine/clutter.calibrate.test.ts --mode calibrate",
     "build:catalog": "node scripts/build-catalog.mjs"
   },
   "dependencies": {

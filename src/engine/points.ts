@@ -63,7 +63,7 @@ export function sanitizeOptions(raw: Partial<SearchOptions>): SearchOptions {
     minSpanDeg: clamp(num(o.minSpanDeg, DEFAULT_OPTIONS.minSpanDeg), 0.1, MAX_SPAN_CEILING_DEG),
     minAltitudeDeg: clamp(num(o.minAltitudeDeg, DEFAULT_OPTIONS.minAltitudeDeg), 0, 60),
     errorThresholdPct: clamp(num(o.errorThresholdPct, DEFAULT_OPTIONS.errorThresholdPct), 0.1, 20),
-    maxResults: Math.round(clamp(num(o.maxResults, DEFAULT_OPTIONS.maxResults), 1, 200)),
+    maxResults: Math.round(clamp(num(o.maxResults, DEFAULT_OPTIONS.maxResults), 1, 1000)),
     startYear: Math.round(clamp(num(o.startYear, DEFAULT_OPTIONS.startYear), -198000, 198000)),
     endYear: Math.round(clamp(num(o.endYear, DEFAULT_OPTIONS.endYear), -198000, 198000)),
     discoveryStepYears: Math.round(clamp(num(o.discoveryStepYears, DEFAULT_OPTIONS.discoveryStepYears), 50, 50000)),
