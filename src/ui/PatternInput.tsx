@@ -172,7 +172,9 @@ function DrawEditor({ points, setPoints }: { points: Point[]; setPoints: (p: Poi
 
 function NumberCell({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   const [text, setText] = useState(String(value));
-  useEffect(() => setText(String(value)), [value]);
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
   return (
     <input
       aria-label={label}
@@ -270,7 +272,9 @@ function JsonEditor({
   const current = useMemo(() => toPatternJson(normalized, options), [normalized, options]);
   const [text, setText] = useState(current);
   const [error, setError] = useState('');
-  useEffect(() => setText(current), [current]);
+  useEffect(() => {
+    setText(current);
+  }, [current]);
   const apply = (t: string) => {
     try {
       const parsed = parsePatternJson(t);

@@ -364,6 +364,107 @@ svg.editor {
   gap: 2px;
 }
 
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-tip {
+  position: relative;
+  display: inline-flex;
+  font-weight: normal;
+}
+
+button.info-button {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+  background: none;
+  color: var(--muted);
+  font: italic 600 11px/14px Georgia, serif;
+  display: inline-grid;
+  place-items: center;
+}
+
+button.info-button:hover,
+button.info-button[aria-expanded='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.info-pop {
+  position: absolute;
+  top: 22px;
+  left: -8px;
+  z-index: 20;
+  width: min(320px, 80vw);
+  background: #1c2540;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.info-pop strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.info-pop p {
+  margin: 0 0 6px;
+}
+
+.info-pop p:last-child {
+  margin-bottom: 0;
+}
+
+.options-grid .field:nth-child(2n) .info-pop {
+  left: auto;
+  right: -8px;
+}
+
+.bright-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+}
+
+.bright-row .field.inline {
+  margin-top: 0;
+}
+
+.bright-row input[type='number'] {
+  width: 64px;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.segmented button {
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 6px 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.segmented button.active {
+  background: #2f5fb3;
+  color: #fff;
+}
+
 .field small {
   color: var(--muted);
   font-size: 11px;
@@ -453,6 +554,24 @@ table.results tbody.selected {
 
 table.results tbody.selected td.members {
   color: var(--text);
+}
+
+.member-bright {
+  font-weight: 700;
+  color: #fff;
+}
+
+.member-moving {
+  color: var(--gold);
+}
+
+.all-bright {
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.legend-bright {
+  margin-left: auto;
 }
 
 table.results thead th {
@@ -591,6 +710,25 @@ button.nav-button {
 
 .modal progress {
   width: 100%;
+  height: 8px;
+  appearance: none;
+  border: none;
+  border-radius: 4px;
+  background: #0f1526;
+  overflow: hidden;
+}
+
+.modal progress::-webkit-progress-bar {
+  background: #0f1526;
+}
+
+.modal progress::-webkit-progress-value {
+  background: var(--accent);
+  transition: width 0.2s;
+}
+
+.modal progress::-moz-progress-bar {
+  background: var(--accent);
 }
 
 .modal p {

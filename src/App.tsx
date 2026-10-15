@@ -11,7 +11,7 @@ import { PatternInput } from './ui/PatternInput';
 import { ResultDetail } from './ui/ResultDetail';
 import { ResultsTable } from './ui/ResultsTable';
 import { formatYear } from './ui/format';
-import { runSearch, type SearchProgress } from './ui/searchClient';
+import { runSearch, type SearchProgress, type SearchResults } from './ui/searchClient';
 
 const EXAMPLE = ['Dubhe', 'Merak', 'Phecda', 'Megrez', 'Alioth', 'Mizar', 'Alkaid'];
 
@@ -31,7 +31,8 @@ export function App() {
   const [loadError, setLoadError] = useState('');
   const [points, setPoints] = useState<Point[]>([]);
   const [options, setOptions] = useState<SearchOptions>(DEFAULT_OPTIONS);
-  const [results, setResults] = useState<FitResult[] | null>(null);
+  const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
+  const [view, setView] = useState<'all' | 'bright'>('all');
   const [usedOptions, setUsedOptions] = useState<SearchOptions>(DEFAULT_OPTIONS);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [progress, setProgress] = useState<SearchProgress | null>(null);
@@ -40,7 +41,9 @@ export function App() {
   const [tab, setTab] = useState<'search' | 'results'>('search');
   const cancelRef = useRef<(() => void) | null>(null);
   const detailRef = useRef<HTMLDivElement>(null);
-  useEffect(() => detailRef.current?.scrollTo({ top: 0 }), [selectedKey]);
+  useEffect(() => {
+    if (detailRef.current) detailRef.current.scrollTop = 0;
+  }, [selectedKey]);
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/stars.json`)
@@ -55,7 +58,14 @@ export function App() {
   const [searchedKey, setSearchedKey] = useState('');
   const currentKey = JSON.stringify([normalizePoints(points), options]);
   const running = progress !== null;
+  const results: FitResult[] | null =
+    searchResults && (view === 'bright' && searchResults.bright ? searchResults.bright : searchResults.all);
   const selected = useMemo(() => results?.find((r) => r.key === selectedKey) ?? null, [results, selectedKey]);
+  const showView = (v: 'all' | 'bright') => {
+    setView(v);
+    const list = v === 'bright' ? searchResults?.bright : searchResults?.all;
+    if (list && !list.some((r) => r.key === selectedKey)) setSelectedKey(list[0]?.key ?? null);
+  };
 
   const start = () => {
     if (!catalog) return;
@@ -65,19 +75,20 @@ export function App() {
       return;
     }
     setError('');
-    setResults(null);
+    setSearchResults(null);
+    setView('all');
     setSelectedKey(null);
     setUsedOptions(options);
     setSearchedKey(currentKey);
     const t0 = performance.now();
-    setProgress({ phase: 'discovery', done: 0, total: 0 });
+    setProgress({ phase: 'discovery', pass: 'all', done: 0, total: 0 });
     setTab('results');
     const job = runSearch(catalog.json, normalizePoints(points), options, setProgress);
     cancelRef.current = job.cancel;
     job.promise
       .then((r) => {
-        setResults(r);
-        setSelectedKey(r[0]?.key ?? null);
+        setSearchResults(r);
+        setSelectedKey(r.all[0]?.key ?? null);
       })
       .catch((e: Error) => {
         setError(e.message);
@@ -133,9 +144,9 @@ export function App() {
                 Load Big Dipper example
               </button>
             )}
-            {results && (
+            {searchResults && (
               <button className="nav-button" onClick={() => setTab('results')}>
-                View results ({results.length}) →
+                View results ({searchResults.all.length}) →
               </button>
             )}
             <button className="primary search-button" onClick={start} disabled={!catalog || running || points.length < 3}>
@@ -155,24 +166,46 @@ export function App() {
         <div className="results-page">
           <section className="panel results-pane">
             <div className="results-head">
-              <h2>Best fits</h2>
-              {results && (
-                <span className="hint">
-                  {results.length} fit{results.length === 1 ? '' : 's'} in {elapsed.toFixed(1)} s
-                </span>
+              {searchResults?.bright ? (
+                <div className="segmented" role="tablist" aria-label="Result set">
+                  <button role="tab" aria-selected={view === 'all'} className={view === 'all' ? 'active' : ''} onClick={() => showView('all')}>
+                    Top fits ({searchResults.all.length})
+                  </button>
+                  <button
+                    role="tab"
+                    aria-selected={view === 'bright'}
+                    className={view === 'bright' ? 'active' : ''}
+                    onClick={() => showView('bright')}
+                  >
+                    Top bright fits ({searchResults.bright.length})
+                  </button>
+                </div>
+              ) : (
+                <h2>Best fits</h2>
               )}
+              {searchResults && <span className="hint">{elapsed.toFixed(1)} s</span>}
+              <span className="hint legend-bright">
+                <span className="member-bright">Bold</span>: magnitude {usedOptions.brightMag.toFixed(1)} or brighter
+              </span>
             </div>
+            {view === 'bright' && searchResults?.bright && (
+              <p className="hint">
+                Every star in these fits is magnitude {usedOptions.brightMag.toFixed(1)} or brighter, ranked by error.
+              </p>
+            )}
             {results && searchedKey !== currentKey && (
               <p className="warn-box">The points or options changed since this search. Run Find fits again to update.</p>
             )}
             {results?.length === 0 && (
               <p>No fits. Try a larger error threshold, a different magnitude limit, or a different span.</p>
             )}
-            {results && <ResultsTable results={results} selectedKey={selectedKey} onSelect={setSelectedKey} />}
+            {results && (
+              <ResultsTable results={results} selectedKey={selectedKey} onSelect={setSelectedKey} brightMag={usedOptions.brightMag} />
+            )}
           </section>
           <div className="detail-pane" ref={detailRef}>
             {selected && catalog ? (
-              <ResultDetail result={selected} field={catalog.field} magLimit={usedOptions.magLimit} />
+              <ResultDetail result={selected} field={catalog.field} magLimit={usedOptions.magLimit} brightMag={usedOptions.brightMag} />
             ) : (
               <section className="panel hint">Select a fit to see its sky chart and details.</section>
             )}
@@ -187,9 +220,10 @@ export function App() {
             <h2>Searching the sky</h2>
             <progress value={progress.done} max={progress.total || 1} />
             <p>
+              {progress.pass === 'bright' ? 'Top bright fits — ' : 'Top fits — '}
               {progress.phase === 'discovery'
-                ? `Searching epochs ${progress.done} / ${progress.total}`
-                : `Refining epoch ranges and visibility ${progress.done} / ${progress.total}`}
+                ? `searching epochs ${progress.done} / ${progress.total}`
+                : `refining epoch ranges and visibility ${progress.done} / ${progress.total}`}
             </p>
             <button onClick={() => cancelRef.current?.()}>Cancel</button>
           </div>

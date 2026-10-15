@@ -70,5 +70,7 @@ export function sanitizeOptions(raw: Partial<SearchOptions>): SearchOptions {
     refineStepYears: Math.round(clamp(num(o.refineStepYears, DEFAULT_OPTIONS.refineStepYears), 10, 10000)),
     movingBodies: Array.isArray(o.movingBodies) ? o.movingBodies.filter((b): b is BodyId => BODY_IDS.has(b)) : [],
     maxMovingPoints: Math.round(clamp(num(o.maxMovingPoints, DEFAULT_OPTIONS.maxMovingPoints), 0, 2)),
+    brightFits: typeof o.brightFits === 'boolean' ? o.brightFits : DEFAULT_OPTIONS.brightFits,
+    brightMag: clamp(num(o.brightMag, DEFAULT_OPTIONS.brightMag), -1, 6.5),
   };
 }

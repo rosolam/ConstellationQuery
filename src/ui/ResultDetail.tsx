@@ -10,6 +10,7 @@ interface Props {
   result: FitResult;
   field: StarField;
   magLimit: number;
+  brightMag: number;
 }
 
 const PHASE_LABEL = {
@@ -19,11 +20,13 @@ const PHASE_LABEL = {
   'lower culmination': 'Lowest (below the pole)',
 };
 
-export function ResultDetail({ result, field, magLimit }: Props) {
+export function ResultDetail({ result, field, magLimit, brightMag }: Props) {
   const band = result.latitudeBand;
   const mid = Math.round(((band.minLat + band.maxLat) / 2) * 4) / 4;
   const [lat, setLat] = useState(mid);
-  useEffect(() => setLat(mid), [result.key, mid]);
+  useEffect(() => {
+    setLat(mid);
+  }, [result.key, mid]);
   const orientation = useMemo(
     () => horizonOrientation(result.center, result.figureUp, result.bestYear, lat),
     [result, lat],
@@ -147,7 +150,9 @@ export function ResultDetail({ result, field, magLimit }: Props) {
             return (
               <tr key={m.pointIndex}>
                 <td>{m.pointIndex + 1}</td>
-                <td>{m.kind === 'moving' ? `Moving: ${m.name}` : m.name}</td>
+                <td className={m.kind === 'star' && m.mag <= brightMag ? 'member-bright' : ''}>
+                  {m.kind === 'moving' ? `Moving: ${m.name}` : m.name}
+                </td>
                 <td>{m.kind === 'star' ? m.mag.toFixed(2) : '—'}</td>
                 <td>{m.kind === 'star' ? `${m.residualDeg.toFixed(2)}°` : 'on path'}</td>
                 <td>

@@ -1,5 +1,4 @@
 const CURRENT_YEAR = new Date().getFullYear();
-
 /** Astronomical year to a calendar label: 0 is 1 BCE, -1 is 2 BCE. */
 export function formatYear(y: number): string {
   const n = y > 0 ? y : 1 - y;

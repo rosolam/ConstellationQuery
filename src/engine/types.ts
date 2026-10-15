@@ -27,10 +27,14 @@ export interface SearchOptions {
   movingBodies: BodyId[];
   /** Points that may be filled by a moving body (0-2). */
   maxMovingPoints: number;
+  /** Also search using only bright stars and list those fits separately. */
+  brightFits: boolean;
+  /** Stars at or brighter than this magnitude count as bright. */
+  brightMag: number;
 }
 
 export const DEFAULT_OPTIONS: SearchOptions = {
-  magLimit: 6.0,
+  magLimit: 5.0,
   maxSpanDeg: 60,
   minSpanDeg: 10,
   minAltitudeDeg: 10,
@@ -42,6 +46,8 @@ export const DEFAULT_OPTIONS: SearchOptions = {
   refineStepYears: 250,
   movingBodies: [],
   maxMovingPoints: 1,
+  brightFits: true,
+  brightMag: 4.0,
 };
 
 export const MAX_SPAN_CEILING_DEG = 90;
